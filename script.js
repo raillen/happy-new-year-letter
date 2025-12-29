@@ -109,7 +109,7 @@ if (window.DeviceOrientationEvent && 'ontouchstart' in window) {
 scene.addEventListener('click', () => {
     if (!isOpen) {
         initAudio();
-        if (!isMuted) bgMusic.play().catch(() => { }); // Tenta tocar música se não estiver mudo
+        if (!isMuted) bgMusic.play().catch(() => { /* Autoplay prevent handled */ });
         isOpen = true;
         scene.classList.add('is-open');
         scene.classList.remove('is-floating'); // Garante remoção ao abrir
@@ -205,34 +205,24 @@ zoomSlider.addEventListener('input', (e) => {
     fullLetterContent.style.transform = `scale(${zoomLevel})`;
 });
 
-zoomInBtn.addEventListener('click', () => {
-    if (zoomLevel < 1.5) {
-        zoomLevel = Math.min(1.5, zoomLevel + 0.1);
+// Helper para ajuste de Zoom (Carta)
+function adjustLetterZoom(delta) {
+    const newZoom = zoomLevel + delta;
+    if (newZoom >= 0.5 && newZoom <= 1.5) {
+        zoomLevel = newZoom;
         updateZoom();
     }
-});
+}
 
-zoomOutBtn.addEventListener('click', () => {
-    if (zoomLevel > 0.5) {
-        zoomLevel = Math.max(0.5, zoomLevel - 0.1);
-        updateZoom();
-    }
-});
+zoomInBtn.addEventListener('click', () => adjustLetterZoom(0.1));
+zoomOutBtn.addEventListener('click', () => adjustLetterZoom(-0.1));
 
 // Zoom com roda do mouse
 readingOverlay.addEventListener('wheel', (e) => {
     if (readingOverlay.classList.contains('active')) {
-        e.preventDefault(); // Evita scroll da página
-        if (e.deltaY < 0) { // Scroll Up (Zoom In)
-            if (zoomLevel < 1.5) {
-                zoomLevel = Math.min(1.5, zoomLevel + 0.05);
-            }
-        } else { // Scroll Down (Zoom Out)
-            if (zoomLevel > 0.5) {
-                zoomLevel = Math.max(0.5, zoomLevel - 0.05);
-            }
-        }
-        updateZoom();
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.05 : -0.05;
+        adjustLetterZoom(delta);
     }
 }, { passive: false });
 
@@ -492,8 +482,7 @@ function animate() {
 
 resizeCanvas();
 animate();
-// Forçar click inicial para destravar audio context se user interagir
-// audioBtn.click(); // Comentado para não auto-tocar e assustar, user tem que clicar explícito
+// Forçar click inicial movido para interação do usuário explícita
 
 /**
  * --- MODO CRIADOR & PERSONALIZAÇÃO (LINK GENERATOR) ---
