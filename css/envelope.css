@@ -1,0 +1,204 @@
+/* Container 3D Principal */
+.scene {
+    position: relative;
+    width: 340px;
+    height: 240px;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    transition: transform 0.1s ease-out;
+    z-index: 20;
+}
+
+/* envelope */
+.envelope {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+}
+
+/* CAMADA 1: Parte de tras */
+.envelope-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--envelope-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: translateZ(0px);
+}
+
+/* CAMADA 2: Carta (Preview) */
+.letter-preview {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 0;
+    background: #fffcf5;
+    transform: translateZ(10px);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.6s ease;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    backface-visibility: hidden;
+}
+
+/* Textura de papel */
+.letter-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* CAMADA 3: Frente do envelope (Bolso) */
+.envelope-pocket {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateZ(20px);
+    transform-style: preserve-3d;
+    border-bottom: 130px solid var(--envelope-color);
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    border-top: 110px solid transparent;
+    transform-origin: bottom;
+    pointer-events: none;
+    filter: drop-shadow(0 -5px 15px rgba(0, 0, 0, 0.3));
+}
+
+.envelope-pocket::after {
+    content: '';
+    position: absolute;
+    bottom: -130px;
+    left: -170px;
+    width: 0;
+    height: 0;
+    border-bottom: 130px solid transparent;
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    border-top: 0;
+    filter: drop-shadow(0 -2px 1px rgba(212, 175, 55, 0.5));
+    pointer-events: none;
+    transform: translateZ(1px);
+}
+
+/* CAMADA 4: Aba do envelope (Abre e fecha) */
+.envelope-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateZ(20px);
+    z-index: 20;
+    transform-origin: top;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    border-top: 130px solid var(--envelope-flap-color);
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+    transform-style: preserve-3d;
+}
+
+/* Selo de cera */
+.wax-seal {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%) translateZ(2px);
+    width: 45px;
+    height: 45px;
+    background: radial-gradient(circle at 30% 30%, var(--gold-main), var(--gold-dark));
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 2px 5px rgba(255, 255, 255, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #4a3b18;
+    border: 2px solid #bfa048;
+}
+
+/* ESTADOS DE ANIMAÇÃO DO ENVELOPE */
+.scene.is-open .envelope-flap {
+    transform: rotateX(180deg);
+    z-index: 0;
+}
+
+.scene.is-open .letter-preview {
+    transform: translateY(-100px) translateZ(50px);
+    z-index: 30;
+    cursor: zoom-in;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* CONTEÚDO DA CARTA (PREVIEW) */
+.letter-header {
+    font-family: 'Pinyon Script', cursive;
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.letter-body-preview {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.6rem;
+    color: #555;
+    text-align: center;
+    line-height: 1.5;
+    opacity: 0.7;
+    filter: blur(0.5px);
+}
+
+/* Responsividade Envelope */
+@media (max-width: 600px) {
+    .scene {
+        width: 300px;
+        height: 210px;
+    }
+
+    .envelope-pocket {
+        border-bottom-width: 115px;
+        border-left-width: 150px;
+        border-right-width: 150px;
+    }
+
+    .envelope-pocket::after {
+        bottom: -115px;
+        left: -150px;
+        border-bottom-width: 115px;
+        border-left-width: 150px;
+        border-right-width: 150px;
+    }
+
+    .envelope-flap {
+        border-top-width: 115px;
+        border-left-width: 150px;
+        border-right-width: 150px;
+    }
+
+    .letter-preview {
+        padding: 10px;
+    }
+
+    .letter-header {
+        font-size: 1.5rem;
+    }
+}

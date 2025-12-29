@@ -1,0 +1,499 @@
+/* MODO LEITURA (FULLSCREEN) */
+.reading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.reading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.zoom-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* A Carta Grande */
+.full-letter {
+    width: 90%;
+    max-width: 600px;
+    background: #fffcf5;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    border: 1px solid #d4af37;
+    outline: 2px solid rgba(212, 175, 55, 0.2);
+    outline-offset: -10px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+    border-radius: 2px;
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    transform: scale(0.8);
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #1a1a1a;
+}
+
+.reading-overlay.active .full-letter {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Texto da Carta */
+.ornament-top,
+.ornament-bottom {
+    font-size: 2rem;
+    color: var(--gold-main);
+    margin: 10px 0;
+    opacity: 0.8;
+}
+
+.full-letter h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    margin: 20px 0;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.full-letter p {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1rem, 3vw, 1.15rem);
+    color: #4a4a4a;
+    line-height: 1.8;
+    margin-bottom: 25px;
+    max-width: 90%;
+    font-weight: 500;
+}
+
+.signature {
+    font-family: 'Pinyon Script', cursive;
+    font-size: 2.5rem;
+    color: var(--gold-main);
+    margin-top: 30px;
+}
+
+/* UI Controls */
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 200;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: var(--gold-main);
+}
+
+.zoom-controls {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    z-index: 200;
+}
+
+.zoom-btn {
+    color: var(--gold-main);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 150px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold-main);
+    cursor: pointer;
+    border: 2px solid #000;
+}
+
+/* Audio Control */
+.audio-control {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--gold-main);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.audio-control:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hint-text {
+    position: fixed;
+    bottom: 40px;
+    color: rgba(212, 175, 55, 0.7);
+    font-size: 0.9rem;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: pulse 2s infinite;
+    z-index: 15;
+    pointer-events: none;
+    transition: opacity 0.5s;
+    text-align: center;
+    width: 100%;
+}
+
+/* MODAL & CREATOR STYLES */
+.footer-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    display: flex;
+    gap: 10px;
+}
+
+.footer-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--gold-main);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.footer-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    transform: translateY(-2px);
+}
+
+.creator-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+.creator-modal.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.creator-content {
+    background: #111;
+    border: 1px solid var(--gold-dark);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    padding: 25px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    transform: translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.creator-modal.active .creator-content {
+    transform: translateY(0);
+}
+
+.creator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.creator-header h2 {
+    color: var(--gold-main);
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    color: #888;
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    font-family: sans-serif;
+}
+
+.creator-body input[type="text"],
+.creator-body textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 4px;
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    outline: none;
+    font-size: 1rem;
+}
+
+.creator-body textarea {
+    resize: none;
+    height: 80px;
+}
+
+.creator-body input:focus,
+.creator-body textarea:focus {
+    border-color: var(--gold-main);
+}
+
+.row-group {
+    display: flex;
+    gap: 15px;
+}
+
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    background: none;
+    cursor: pointer;
+}
+
+#color-hex {
+    color: #aaa;
+    font-size: 0.9rem;
+    font-family: monospace;
+}
+
+.creator-actions {
+    margin-top: 20px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(45deg, var(--gold-dark), var(--gold-main));
+    border: none;
+    color: #000;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: filter 0.3s;
+}
+
+.action-btn:hover {
+    filter: brightness(1.2);
+}
+
+.result-area {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.5s;
+}
+
+.result-area.hidden {
+    display: none;
+}
+
+.link-display {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.link-display input {
+    background: #000;
+    border: 1px solid #333;
+    font-size: 0.8rem;
+    color: var(--gold-light);
+}
+
+#copy-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.whatsapp-btn {
+    width: 100%;
+    background: #25D366;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s;
+}
+
+.whatsapp-btn:hover {
+    background: #128C7E;
+}
+
+/* Donation Area */
+.donation-area {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.donation-text {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 8px;
+    font-family: sans-serif;
+}
+
+.pix-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #aaa;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    font-family: monospace;
+}
+
+.pix-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: var(--gold-main);
+}
+
+.tooltip {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.75rem;
+    color: #25D366;
+    opacity: 0;
+    transition: opacity 0.3s;
+    height: 0;
+}
+
+.tooltip.visible {
+    opacity: 1;
+    height: auto;
+}
+
+/* Responsividade de Componentes */
+@media (max-width: 600px) {
+    .zoom-controls {
+        width: 90%;
+        justify-content: space-between;
+        bottom: 80px;
+    }
+
+    input[type=range] {
+        width: 100%;
+    }
+
+    .full-letter {
+        width: 95%;
+        padding: 30px 20px;
+    }
+}

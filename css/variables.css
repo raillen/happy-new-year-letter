@@ -1,0 +1,9 @@
+:root {
+    --envelope-color: #1c2b45;
+    /* Azul Escuro Premium */
+    --envelope-flap-color: #243452;
+    /* Um pouco mais claro */
+    --gold-main: #d4af37;
+    --gold-dark: #b8860b;
+    --gold-light: #f7e7ce;
+}
