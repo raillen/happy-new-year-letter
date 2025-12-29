@@ -100,58 +100,65 @@ document.addEventListener('touchmove', (e) => {
 document.addEventListener('touchend', () => { initialPinchDistance = null; });
 
 // Abrir Envelope
-scene.addEventListener('click', () => {
-    if (!state.isOpen) {
-        initAudio();
-        playBgMusic();
-        state.isOpen = true;
-        scene.classList.add('is-open');
-        scene.classList.remove('is-floating');
-        hintText.style.opacity = '0';
-        playPaperSound();
-        createFireworks(window.innerWidth / 2, window.innerHeight / 3);
-    }
-});
+if (scene) {
+    scene.addEventListener('click', () => {
+        if (!state.isOpen) {
+            initAudio();
+            playBgMusic();
+            state.isOpen = true;
+            scene.classList.add('is-open');
+            scene.classList.remove('is-floating');
+            if (hintText) hintText.style.opacity = '0';
+            playPaperSound();
+            createFireworks(window.innerWidth / 2, window.innerHeight / 3);
+        }
+    });
+}
 
 // Abrir Carta
-letterPreview.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (state.isOpen) {
-        readingOverlay.classList.add('active');
-        updateLetterZoom(1);
+if (letterPreview) {
+    letterPreview.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (state.isOpen) {
+            readingOverlay.classList.add('active');
+            updateLetterZoom(1);
 
-        createFireworks(window.innerWidth * 0.2, window.innerHeight * 0.3);
-        setTimeout(() => createFireworks(window.innerWidth * 0.8, window.innerHeight * 0.4), 400);
+            createFireworks(window.innerWidth * 0.2, window.innerHeight * 0.3);
+            setTimeout(() => createFireworks(window.innerWidth * 0.8, window.innerHeight * 0.4), 400);
 
-        if (state.fireworksInterval) clearInterval(state.fireworksInterval);
-        state.fireworksInterval = setInterval(() => {
-            const y = Math.random() * (window.innerHeight * 0.6);
-            const x = Math.random() * window.innerWidth;
-            createFireworks(x, y);
-        }, 1200);
+            if (state.fireworksInterval) clearInterval(state.fireworksInterval);
+            state.fireworksInterval = setInterval(() => {
+                const y = Math.random() * (window.innerHeight * 0.6);
+                const x = Math.random() * window.innerWidth;
+                createFireworks(x, y);
+            }, 1200);
 
-        startTypewriter();
-    }
-});
+            startTypewriter();
+        }
+    });
+}
 
 // Fechar / Reset
 const closeAction = () => {
     if (state.fireworksInterval) clearInterval(state.fireworksInterval);
-    readingOverlay.classList.remove('active');
+    if (readingOverlay) readingOverlay.classList.remove('active');
     if (state.isOpen) {
         state.isOpen = false;
-        scene.classList.remove('is-open');
-        setTimeout(() => { if (!state.isOpen) hintText.style.opacity = '0.7'; }, 800);
+        if (scene) scene.classList.remove('is-open');
+        setTimeout(() => { if (!state.isOpen && hintText) hintText.style.opacity = '0.7'; }, 800);
     }
 };
-closeLetterBtn.addEventListener('click', closeAction);
 
-readingOverlay.addEventListener('click', (e) => {
-    if (e.target === readingOverlay || e.target.id === 'zoom-container') {
-        if (state.zoomLevel > 1.1) updateLetterZoom(1);
-        else closeAction();
-    }
-});
+if (closeLetterBtn) closeLetterBtn.addEventListener('click', closeAction);
+
+if (readingOverlay) {
+    readingOverlay.addEventListener('click', (e) => {
+        if (e.target === readingOverlay || e.target.id === 'zoom-container') {
+            if (state.zoomLevel > 1.1) updateLetterZoom(1);
+            else closeAction();
+        }
+    });
+}
 
 // --- ZOOM LOGIC (CARTA) ---
 function updateLetterZoom(newLevel) {
