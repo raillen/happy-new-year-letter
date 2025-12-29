@@ -566,6 +566,20 @@ copyBtn.addEventListener('click', () => {
     setTimeout(() => copyBtn.innerText = 'Copiar', 2000);
 });
 
+// Doação PIX
+const pixBtn = document.getElementById('pix-btn');
+const pixMsg = document.getElementById('pix-copied-msg');
+
+if (pixBtn) {
+    pixBtn.addEventListener('click', () => {
+        const key = pixBtn.getAttribute('data-key');
+        navigator.clipboard.writeText(key).then(() => {
+            pixMsg.classList.add('visible');
+            setTimeout(() => pixMsg.classList.remove('visible'), 2000);
+        });
+    });
+}
+
 /**
  * LÓGICA DE CARREGAMENTO (LEITURA DA URL)
  */
