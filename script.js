@@ -31,6 +31,13 @@ document.addEventListener('mousemove', (e) => {
     const rotateY = Math.max(-25, Math.min(25, -x));
 
     scene.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+    // Atualiza efeito foil (Holográfico)
+    const foil = document.getElementById('foil-layer');
+    if (foil) {
+        foil.style.backgroundPosition = `${(e.pageX / window.innerWidth) * 100}% ${(e.pageY / window.innerHeight) * 100}%`;
+        foil.style.opacity = '1';
+    }
 });
 
 // Suporte a Giroscópio (Mobile)
@@ -89,10 +96,12 @@ letterPreview.addEventListener('click', (e) => {
         if (fireworksInterval) clearInterval(fireworksInterval);
         fireworksInterval = setInterval(() => {
             // Posição aleatória, evitando levemente o centro absoluto onde está o texto
-            const x = Math.random() * window.innerWidth;
             const y = Math.random() * (window.innerHeight * 0.6); // Mais na parte superior
             createFireworks(x, y);
         }, 1200); // A cada 1.2 segundos
+
+        // Inicia efeito Typewriter na carta
+        startTypewriter();
     }
 });
 
@@ -572,3 +581,78 @@ loadCustomization();
 
 // Inicia animação idle para chamar atenção
 scene.classList.add('is-floating');
+
+// Inicia Countdown
+startCountdown();
+
+/**
+ * FUNÇÕES DE POLIMENTO (TYPEWRITER & COUNTDOWN)
+ */
+function startTypewriter() {
+    const p = document.querySelector('.full-letter p');
+    if (p.dataset.typed === 'true') return; // Já digitou
+
+    // Texto original (salvo ou do HTML)
+    const originalText = p.innerText;
+    p.innerText = '';
+    p.classList.add('typing-cursor');
+
+    let i = 0;
+    const speed = 30; // ms por letra
+
+    function type() {
+        if (i < originalText.length) {
+            p.innerText += originalText.charAt(i);
+            i++;
+            // Scroll automático se necessário (para textos longos)
+            // p.scrollTop = p.scrollHeight; 
+            setTimeout(type, speed);
+        } else {
+            p.classList.remove('typing-cursor');
+            p.dataset.typed = 'true';
+        }
+    }
+
+    // Pequeno delay para começar
+    setTimeout(type, 500);
+}
+
+function startCountdown() {
+    const container = document.getElementById('countdown-container');
+
+    // Data alvo: Próximo Ano Novo (01/01/Ano+1)
+    const now = new Date();
+    let nextYear = now.getFullYear() + 1;
+    // Se hoje for 1 de Jan, conta para o próximo? Ou celebra?
+    // Vamos assumir sempre o próximo 1 de Jan.
+
+    const targetDate = new Date(`Jan 1, ${nextYear} 00:00:00`).getTime();
+
+    function update() {
+        const current = new Date().getTime();
+        const diff = targetDate - current;
+
+        if (diff <= 0) {
+            container.innerHTML = '<span style="font-size:1.5em; font-weight:bold;">🎉 Feliz Ano Novo!</span>';
+            container.style.opacity = '1';
+            return;
+        }
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        container.innerHTML = `
+            <div class="countdown-unit"><span class="countdown-number">${d}</span><span class="countdown-label">Dias</span></div>
+            <div class="countdown-unit"><span class="countdown-number">${h}</span><span class="countdown-label">Hrs</span></div>
+            <div class="countdown-unit"><span class="countdown-number">${m}</span><span class="countdown-label">Min</span></div>
+            <div class="countdown-unit"><span class="countdown-number">${s}</span><span class="countdown-label">Seg</span></div>
+        `;
+
+        container.style.opacity = '1';
+    }
+
+    setInterval(update, 1000);
+    update(); // Chamada inicial
+}

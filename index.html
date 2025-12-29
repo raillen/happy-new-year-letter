@@ -33,30 +33,44 @@
         </svg>
     </div>
 
+    <div id="countdown-container">
+        <!-- Countdown injectado via JS -->
+    </div>
+
     <!-- Cena 3D -->
-    <div class="scene" id="scene">
+    <main class="scene" id="scene">
         <div class="envelope" id="envelope">
 
             <div class="envelope-back"></div>
 
-            <!-- A Carta (Miniatura) -->
-            <div class="letter-preview" id="letter-preview">
-                <div class="letter-header">2026</div>
-                <div class="letter-body-preview">
-                    Um convite especial para<br>celebrar novas conquistas.<br>Toque para ler.
+            <div class="card" id="card">
+                <div class="full-letter" id="full-letter-content">
+                    <h1>Feliz Ano Novo!</h1>
+                    <p>Que o próximo ano traga novas oportunidades, alegrias e conquistas. Brilhe muito em 2025!</p>
+                </div>
+                <div class="letter-preview" id="letter-preview">
+                    <div class="letter-header">
+                        <span id="recipient-title" style="font-weight: bold; color: var(--gold-dark);">Feliz Ano
+                            Novo!</span>
+                    </div>
+                    <div class="letter-body-preview">
+                        Que o próximo ano traga novas oportunidades...
+                    </div>
                 </div>
             </div>
 
-            <!-- Frente do Envelope -->
-            <div class="envelope-pocket"></div>
+            <div class="envelope-front">
+                <!-- Camada Holográfica (Foil) -->
+                <div class="foil-layer" id="foil-layer"></div>
+            </div>
 
             <!-- Aba do Envelope -->
             <div class="envelope-flap">
-                <div class="wax-seal">26</div>
+                <div class="wax-seal">2026</div>
             </div>
         </div>
         <div class="hint-text" id="hint-text">Mova o mouse para efeito 3D • Toque para abrir</div>
-    </div>
+    </main>
 
     <!-- Overlay de Leitura -->
     <div class="reading-overlay" id="reading-overlay">
