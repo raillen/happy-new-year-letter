@@ -11,28 +11,34 @@ const closeLetterBtn = document.getElementById('close-letter');
 const hintText = document.getElementById('hint-text');
 
 let isOpen = false;
-let fireworksInterval; // Intervalo global para fogos
+let fireworksInterval;
+let sceneScale = 1; // Zoom do envelope
+let sceneRotateX = 0;
+let sceneRotateY = 0;
 
-// 3D Parallax Effect - Melhorado para mais profundidade
+// Helper para aplicar transformações (Combina Rotação + Escala)
+function updateSceneTransform() {
+    scene.style.transform = `scale(${sceneScale}) rotateX(${sceneRotateX}deg) rotateY(${sceneRotateY}deg)`;
+}
+
+// 3D Parallax Effect
 document.addEventListener('mousemove', (e) => {
     if (isOpen && readingOverlay.classList.contains('active')) return;
 
-    // Remove animação idle se usuário interagir
+    // Remove animação idle
     if (scene.classList.contains('is-floating')) {
         scene.classList.remove('is-floating');
     }
 
-    // Aumentamos o divisor para suavizar, mas permitimos angulos maiores
     const x = (window.innerWidth / 2 - e.pageX) / 20;
     const y = (window.innerHeight / 2 - e.pageY) / 20;
 
-    // Limita a rotação
-    const rotateX = Math.max(-25, Math.min(25, y));
-    const rotateY = Math.max(-25, Math.min(25, -x));
+    sceneRotateX = Math.max(-25, Math.min(25, y));
+    sceneRotateY = Math.max(-25, Math.min(25, -x));
 
-    scene.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    updateSceneTransform();
 
-    // Atualiza efeito foil (Holográfico)
+    // Atualiza foil
     const foil = document.getElementById('foil-layer');
     if (foil) {
         foil.style.backgroundPosition = `${(e.pageX / window.innerWidth) * 100}% ${(e.pageY / window.innerHeight) * 100}%`;
@@ -40,24 +46,61 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
-// Suporte a Giroscópio (Mobile)
-// Suporte a Giroscópio (Apenas Mobile/Tablets com suporte a toque para evitar warnings em Desktop)
+// Zoom no Envelope (Scroll)
+document.addEventListener('wheel', (e) => {
+    if (!isOpen) { // Só funciona se não estiver lendo a carta
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        sceneScale = Math.min(2, Math.max(0.5, sceneScale + delta)); // Limites 0.5x a 2x
+        updateSceneTransform();
+    }
+}, { passive: false });
+
+// Zoom no Envelope (Mobile Pinch)
+let initialPinchDistance = null;
+let initialScale = 1;
+
+document.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2 && !isOpen) {
+        initialPinchDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+        );
+        initialScale = sceneScale;
+    }
+}, { passive: false });
+
+document.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && !isOpen && initialPinchDistance) {
+        e.preventDefault(); // Evita zoom da página
+        const currentDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+        );
+
+        const scaleFactor = currentDistance / initialPinchDistance;
+        sceneScale = Math.min(2, Math.max(0.5, initialScale * scaleFactor));
+        updateSceneTransform();
+    }
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+    initialPinchDistance = null;
+});
+
+// Suporte a Giroscópio
 if (window.DeviceOrientationEvent && 'ontouchstart' in window) {
-    // Verifica se requer permissão (iOS 13+)
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // A permissão deve ser pedida via interação do usuário (clique), 
-        // então aqui apenas deixamos preparado ou ignoramos até um clique específico
+        // ... (lógica de permissão ignorada por simplicidade aqui)
     } else {
         window.addEventListener('deviceorientation', (e) => {
             if (isOpen && readingOverlay.classList.contains('active')) return;
-
-            // Verifica se o evento está retornando dados válidos (alguns browsers desktop disparam com null)
             if (e.beta === null || e.gamma === null) return;
 
-            const y = Math.min(30, Math.max(-30, e.beta - 45));
-            const x = Math.min(30, Math.max(-30, e.gamma));
+            sceneRotateX = Math.min(30, Math.max(-30, e.beta - 45));
+            sceneRotateY = Math.min(30, Math.max(-30, e.gamma));
 
-            scene.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`;
+            updateSceneTransform();
         });
     }
 }
