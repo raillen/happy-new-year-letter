@@ -1,0 +1,776 @@
+/* --- RESET E BASE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Playfair Display', serif;
+    /* Aumentei a perspectiva para exagerar o efeito 3D */
+    perspective: 1200px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Canvas para Estrelas e Fogos (Fundo e Frente) */
+#bg-canvas {
+    position: fixed;
+    /* Mudar para fixed para garantir que cubra tudo mesmo com scroll/zoom */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 120;
+    /* Acima do overlay de leitura (100) */
+    pointer-events: none;
+}
+
+/* --- PALETA DE CORES DOURADAS --- */
+:root {
+    --gold-light: #fdf5c5;
+    --gold-main: #d4af37;
+    --gold-dark: #8a6e2f;
+    --blue-deep: #0a0e17;
+    --glass-bg: rgba(20, 25, 40, 0.85);
+
+    /* Variaveis dinamicas do envelope */
+    --envelope-color: #1c2b45;
+    --envelope-flap-color: #233452;
+    --wax-color: #d4af37;
+}
+
+/* Texto Dourado Brilhante */
+.gold-text {
+    background: linear-gradient(to right, var(--gold-dark), var(--gold-main), var(--gold-light), var(--gold-main), var(--gold-dark));
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+/* --- CENA 3D (CONTAINER) --- */
+.scene {
+    position: relative;
+    width: 340px;
+    height: 240px;
+    z-index: 10;
+    transform-style: preserve-3d;
+    /* CRUCIAL para o 3D funcionar nos filhos */
+    transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* Mais responsivo */
+    cursor: pointer;
+}
+
+/* Texto de instrução inicial */
+.hint-text {
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%) translateZ(0);
+    color: var(--gold-light);
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    letter-spacing: 2px;
+    text-align: center;
+    width: 100%;
+    pointer-events: none;
+    transition: opacity 0.5s;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* --- O ENVELOPE (CONTAINER DO OBJETO) --- */
+.envelope {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    /* Pequena rotação inicial para mostrar profundidade */
+    transform: rotateX(0deg) rotateY(0deg);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* CAMADA 1: Parte de trás do envelope */
+.envelope-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #162035;
+    /* Fallback */
+    background: color-mix(in srgb, var(--envelope-color), black 20%);
+    border-radius: 5px;
+    /* Sombra dinâmica */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    /* Empurrado para o fundo */
+    transform: translateZ(-2px);
+}
+
+/* CAMADA 2: O Papel da Carta (Dentro do envelope) */
+.letter-preview {
+    position: absolute;
+    bottom: 5px;
+    left: 5%;
+    width: 90%;
+    height: 90%;
+    background: linear-gradient(135deg, #fffcf5 0%, #f0e6d2 100%);
+    border-radius: 4px;
+    /* Situado entre o fundo e o bolso */
+    transform: translateZ(5px);
+    transition: transform 0.8s 0.4s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    /* Backface hidden evita bugs visuais ao girar muito */
+    backface-visibility: hidden;
+}
+
+/* Textura de papel */
+.letter-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* CAMADA 3: Frente do envelope (Bolso) */
+.envelope-pocket {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Bem à frente para criar o espaço 3D onde a carta entra */
+    transform: translateZ(20px);
+    transform-style: preserve-3d;
+    border-bottom: 130px solid var(--envelope-color);
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    border-top: 110px solid transparent;
+    transform-origin: bottom;
+    pointer-events: none;
+    /* Sombra projetada na carta atrás */
+    filter: drop-shadow(0 -5px 15px rgba(0, 0, 0, 0.3));
+}
+
+.envelope-pocket::after {
+    content: '';
+    position: absolute;
+    bottom: -130px;
+    left: -170px;
+    width: 0;
+    height: 0;
+    border-bottom: 130px solid transparent;
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    border-top: 0;
+    filter: drop-shadow(0 -2px 1px rgba(212, 175, 55, 0.5));
+    pointer-events: none;
+    transform: translateZ(1px);
+    /* Pequeno relevo na borda dourada */
+}
+
+/* Animação Idle (Flutuar) */
+@keyframes float-envelope {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotateX(0deg);
+    }
+
+    50% {
+        transform: translateY(-15px) rotateX(5deg);
+    }
+}
+
+.scene.is-floating .envelope {
+    animation: float-envelope 3s ease-in-out infinite;
+}
+
+/* CAMADA 4: Aba do envelope (Abre e fecha) */
+.envelope-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Na mesma profundidade do bolso, mas articulada */
+    transform: translateZ(20px);
+    z-index: 20;
+    transform-origin: top;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    border-top: 130px solid var(--envelope-flap-color);
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+    transform-style: preserve-3d;
+}
+
+/* Selo de cera (Fica em cima da aba) */
+.wax-seal {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%) translateZ(2px);
+    /* Relevo sobre a aba */
+    width: 45px;
+    height: 45px;
+    background: radial-gradient(circle at 30% 30%, var(--gold-main), var(--gold-dark));
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 2px 5px rgba(255, 255, 255, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #4a3b18;
+    border: 2px solid #bfa048;
+}
+
+/* --- ESTADOS DE ANIMAÇÃO DO ENVELOPE --- */
+
+.scene.is-open .envelope-flap {
+    transform: rotateX(180deg);
+    z-index: 0;
+    /* Vai para trás visualmente */
+}
+
+.scene.is-open .letter-preview {
+    /* Sobe e sai para fora, ficando na frente do bolso (Z=50px) */
+    transform: translateY(-100px) translateZ(50px);
+    z-index: 30;
+    cursor: zoom-in;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* --- CONTEÚDO DA CARTA (PREVIEW) --- */
+.letter-header {
+    font-family: 'Pinyon Script', cursive;
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.letter-body-preview {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.6rem;
+    color: #555;
+    text-align: center;
+    line-height: 1.5;
+    opacity: 0.7;
+    filter: blur(0.5px);
+}
+
+/* --- MODO LEITURA (FULLSCREEN) --- */
+.reading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    /* Importante para o zoom não criar scroll */
+}
+
+.reading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Container que sofre o Zoom */
+.zoom-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* Suavizei para o reset */
+}
+
+/* A Carta Grande */
+.full-letter {
+    width: 90%;
+    max-width: 600px;
+    background: #fffcf5;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    border: 1px solid #d4af37;
+    outline: 2px solid rgba(212, 175, 55, 0.2);
+    outline-offset: -10px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+    border-radius: 2px;
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    transform: scale(0.8);
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #1a1a1a;
+}
+
+.reading-overlay.active .full-letter {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Texto da Carta */
+.ornament-top,
+.ornament-bottom {
+    font-size: 2rem;
+    color: var(--gold-main);
+    margin: 10px 0;
+    opacity: 0.8;
+}
+
+.full-letter h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    margin: 20px 0;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.full-letter p {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1rem, 3vw, 1.15rem);
+    color: #4a4a4a;
+    line-height: 1.8;
+    margin-bottom: 25px;
+    max-width: 90%;
+    font-weight: 500;
+}
+
+.signature {
+    font-family: 'Pinyon Script', cursive;
+    font-size: 2.5rem;
+    color: var(--gold-main);
+    margin-top: 30px;
+}
+
+/* UI Controls */
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 200;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: var(--gold-main);
+}
+
+/* Controles de Zoom */
+.zoom-controls {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    z-index: 200;
+}
+
+.zoom-btn {
+    color: var(--gold-main);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 150px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold-main);
+    cursor: pointer;
+    border: 2px solid #000;
+}
+
+/* Controles de Audio */
+.audio-control {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--gold-main);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.audio-control:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsividade Extrema */
+@media (max-width: 600px) {
+    .scene {
+        width: 300px;
+        height: 210px;
+    }
+
+    .envelope-pocket {
+        border-bottom-width: 115px;
+        border-left-width: 150px;
+        border-right-width: 150px;
+    }
+
+    .envelope-pocket::after {
+        bottom: -115px;
+        left: -150px;
+        border-bottom-width: 115px;
+        border-left-width: 150px;
+        border-right-width: 150px;
+    }
+
+    .envelope-flap {
+        border-top-width: 115px;
+        border-left-width: 150px;
+        border-right-width: 150px;
+    }
+
+    .letter-preview {
+        padding: 10px;
+    }
+
+    .letter-header {
+        font-size: 1.5rem;
+    }
+
+    .zoom-controls {
+        width: 90%;
+        justify-content: space-between;
+        bottom: 80px;
+    }
+
+    /* Sobe controles no mobile */
+    input[type=range] {
+        width: 100%;
+    }
+
+    .full-letter {
+        width: 95%;
+        padding: 30px 20px;
+    }
+}
+
+/* --- CREATOR MODE STYLES --- */
+
+/* Footer Bar */
+.footer-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    display: flex;
+    gap: 10px;
+}
+
+.footer-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--gold-main);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.footer-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Modal Overlay */
+.creator-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+.creator-modal.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Modal Content */
+.creator-content {
+    background: #111;
+    border: 1px solid var(--gold-dark);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    padding: 25px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    transform: translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.creator-modal.active .creator-content {
+    transform: translateY(0);
+}
+
+.creator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.creator-header h2 {
+    color: var(--gold-main);
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Inputs */
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    color: #888;
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    font-family: sans-serif;
+}
+
+.creator-body input[type="text"],
+.creator-body textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 4px;
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    outline: none;
+    font-size: 1rem;
+}
+
+.creator-body textarea {
+    resize: none;
+    height: 80px;
+}
+
+.creator-body input:focus,
+.creator-body textarea:focus {
+    border-color: var(--gold-main);
+}
+
+.row-group {
+    display: flex;
+    gap: 15px;
+}
+
+/* Color Picker Custom */
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    background: none;
+    cursor: pointer;
+}
+
+#color-hex {
+    color: #aaa;
+    font-size: 0.9rem;
+    font-family: monospace;
+}
+
+/* Actions */
+.creator-actions {
+    margin-top: 20px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(45deg, var(--gold-dark), var(--gold-main));
+    border: none;
+    color: #000;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: filter 0.3s;
+}
+
+.action-btn:hover {
+    filter: brightness(1.2);
+}
+
+/* Result Area */
+.result-area {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.5s;
+}
+
+.result-area.hidden {
+    display: none;
+}
+
+.link-display {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.link-display input {
+    background: #000;
+    border: 1px solid #333;
+    font-size: 0.8rem;
+    color: var(--gold-light);
+}
+
+#copy-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.whatsapp-btn {
+    width: 100%;
+    background: #25D366;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s;
+}
+
+.whatsapp-btn:hover {
+    background: #128C7E;
+}
